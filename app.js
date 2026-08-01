@@ -4410,6 +4410,11 @@ function sharePost(postId) {
         window.open(whatsappUrl, '_blank');
     }
 }
+// Feed posts me yeh line add karein (jahan Like aur Comments hain):
+<span onclick="sharePost(${post.id})" style="cursor: pointer; color: #38bdf8;">🔗 Share</span>
+
+// Reels feed me yeh line add karein:
+<span onclick="sharePost(${reel.id})" style="cursor: pointer; color: #38bdf8;">🔗 Share</span>
     }
     
 });
