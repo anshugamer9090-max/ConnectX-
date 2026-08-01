@@ -3862,4 +3862,506 @@ function addNewPost() {
 
 // Render Reels Feed
 function renderReelsFeed() {
-    c
+    
+// ConnectX Master Logic - Added Explore & Hashtag Trending System
+
+function goTo(screenName) {
+    const screens = document.querySelectorAll('.screen');
+    screens.forEach(s => s.classList.remove('active'));
+    
+    const targetScreen = document.getElementById('screen-' + screenName);
+    if (targetScreen) {
+        targetScreen.classList.add('active');
+    }
+    
+    const badge = document.getElementById('badge');
+    if (badge) {
+        badge.innerText = screenName.toUpperCase();
+    }
+
+    if (screenName === 'home') {
+        renderStoriesTray();
+        renderFeed();
+    } else if (screenName === 'userprofile') {
+        updateProfileUI();
+    } else if (screenName === 'reels') {
+        renderReelsFeed();
+    } else if (screenName === 'notifications') {
+        renderNotifications();
+    } else if (screenName === 'explore') {
+        handleExploreSearch();
+    }
+}
+
+// User Profile Data
+let userProfile = {
+    name: "ConnectX Member",
+    username: "@connectx_user",
+    gender: "Male",
+    age: 21,
+    location: "Delhi",
+    hobbies: "coding, music, gaming",
+    bio: "Welcome to my profile!",
+    avatar: "C"
+};
+
+let userStats = {
+    followersList: [],
+    followingList: []
+};
+
+// Real User Database Pool for AI Matching & Explore
+let realUsersDatabase = [
+    { name: "Priya Sharma", username: "@priya_sharma", gender: "Female", age: 20, location: "Delhi", hobbies: "music, reading, art", bio: "Art lover & coder" },
+    { name: "Aarav Gupta", username: "@aarav_g", gender: "Male", age: 22, location: "Mumbai", hobbies: "gaming, coding, cricket", bio: "Tech enthusiast" },
+    { name: "Sneha Patel", username: "@sneha_p", gender: "Female", age: 21, location: "Bangalore", hobbies: "dancing, coding, travel", bio: "Wanderlust" },
+    { name: "Rohan Verma", username: "@rohan_v", gender: "Male", age: 23, location: "Delhi", hobbies: "music, gym, photography", bio: "Fitness & Shutterbug" }
+];
+
+let posts = [];
+let storiesList = [
+    { id: 1, name: "Priya", username: "@priya_sharma", content: "Enjoying a wonderful morning! ☕", time: Date.now() },
+    { id: 2, name: "Aarav", username: "@aarav_g", content: "Coding new features all day 🚀", time: Date.now() }
+];
+
+let chatConversations = {};
+let notificationsList = [];
+let activeChatUser = null;
+let activePostIdForComments = null;
+let currentAiMatchedUser = null;
+
+// Notification Helper
+function addNotification(text) {
+    notificationsList.unshift({
+        id: Date.now(),
+        text: text,
+        time: "Just now"
+    });
+}
+
+function renderNotifications() {
+    const container = document.getElementById('notifications-list-container');
+    if (!container) return;
+
+    container.innerHTML = '';
+    if (notificationsList.length === 0) {
+        container.innerHTML = '<p style="color: #888; text-align: center; font-size: 11px;">No new notifications yet.</p>';
+        return;
+    }
+
+    notificationsList.forEach(notif => {
+        container.innerHTML += `
+            <div style="background: #1a1a24; padding: 8px; border-radius: 6px; border: 1px solid #2a2a3c; display: flex; justify-content: space-between; align-items: center;">
+                <span>${notif.text}</span>
+                <span style="font-size: 9px; color: #888;">${notif.time}</span>
+            </div>
+        `;
+    });
+}
+
+// Explore & Hashtag Search System
+function handleExploreSearch() {
+    const input = document.getElementById('explore-search-input');
+    const query = input ? input.value.trim().toLowerCase() : '';
+    const container = document.getElementById('explore-results-container');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    // Filter real users matching query
+    let matchedUsers = realUsersDatabase.filter(u => 
+        u.name.toLowerCase().includes(query) || u.username.toLowerCase().includes(query) || u.hobbies.toLowerCase().includes(query)
+    );
+
+    if (matchedUsers.length === 0) {
+        container.innerHTML = '<p style="color: #888; text-align: center; font-size: 10px;">No users found.</p>';
+    } else {
+        matchedUsers.forEach(u => {
+            container.innerHTML += `
+                <div style="background: #1a1a24; padding: 8px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #2a2a3c;">
+                    <div>
+                        <strong>${u.name}</strong>
+                        <div style="font-size: 9px; color: #888;">${u.username} • ${u.hobbies}</div>
+                    </div>
+                    <div>
+                        <button class="btn" style="width: auto; padding: 3px 6px; font-size: 9px; margin-right: 2px;" onclick="toggleFollowUser('${u.username}')">Follow</button>
+                        <button class="btn-outline" style="width: auto; padding: 3px 6px; font-size: 9px;" onclick="openChatWith('${u.username}')">Chat</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+}
+
+function filterByHashtag(tag) {
+    const input = document.getElementById('explore-search-input');
+    if (input) {
+        input.value = tag;
+        handleExploreSearch();
+    }
+    // Automatically switch to home feed highlighting posts containing the hashtag
+    goTo('home');
+    const container = document.getElementById('posts-container');
+    if (!container) return;
+
+    container.innerHTML = `<p style="font-size: 11px; color: #38bdf8; margin-bottom: 8px;">Showing results for: <strong>${tag}</strong></p>`;
+    
+    let filteredPosts = posts.filter(p => p.caption.toLowerCase().includes(tag.toLowerCase()));
+    if (filteredPosts.length === 0) {
+        container.innerHTML += `<p style="color: #888; text-align: center; font-size: 11px;">No posts found for ${tag}</p>`;
+        return;
+    }
+
+    filteredPosts.forEach(post => {
+        const postDiv = document.createElement('div');
+        postDiv.style.cssText = "background: #1a1a24; border-radius: 10px; padding: 10px; border: 1px solid #2a2a3c; margin-bottom: 12px;";
+        postDiv.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                <div style="display: flex; align-items: center;">
+                    <div style="width: 28px; height: 28px; border-radius: 50%; background: #a855f7; margin-right: 8px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;">${post.user.charAt(0)}</div>
+                    <div>
+                        <strong style="font-size: 12px;">${post.user}</strong>
+                        <div style="font-size: 10px; color: #888;">${post.username}</div>
+                    </div>
+                </div>
+            </div>
+            <p style="font-size: 12px; margin: 6px 0;">${post.caption}</p>
+        `;
+        container.appendChild(postDiv);
+    });
+}
+
+// Stories System Logic
+function openAddStoryScreen() {
+    goTo('addstory');
+}
+
+function publishStory() {
+    const content = document.getElementById('story-text-input').value.trim();
+    if (content === "") {
+        alert("Please write something for your story!");
+        return;
+    }
+
+    storiesList.unshift({
+        id: Date.now(),
+        name: userProfile.name,
+        username: userProfile.username,
+        content: content,
+        time: Date.now()
+    });
+
+    document.getElementById('story-text-input').value = "";
+    alert("Story uploaded successfully! It will expire in 24 hours.");
+    goTo('home');
+}
+
+function renderStoriesTray() {
+    const container = document.getElementById('stories-tray-container');
+    if (!container) return;
+
+    const twentyFourHours = 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    storiesList = storiesList.filter(s => (now - s.time) < twentyFourHours);
+
+    container.innerHTML = `
+        <div onclick="openAddStoryScreen()" style="text-align: center; font-size: 10px; cursor: pointer; display: inline-block;">
+            <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #a855f7, #ec4899); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff; margin: 0 auto 2px auto;">+</div>
+            Your Story
+        </div>
+    `;
+
+    storiesList.forEach(story => {
+        container.innerHTML += `
+            <div onclick="viewStory(${story.id})" style="text-align: center; font-size: 10px; cursor: pointer; display: inline-block;">
+                <div style="width: 44px; height: 44px; border-radius: 50%; border: 2px solid #ec4899; background: #252533; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff; margin: 0 auto 2px auto;">${story.name.charAt(0)}</div>
+                ${story.name}
+            </div>
+        `;
+    });
+}
+
+function viewStory(storyId) {
+    const story = storiesList.find(s => s.id === storyId);
+    if (!story) return;
+
+    goTo('viewstory');
+    document.getElementById('view-story-username').innerText = story.name + " (" + story.username + ")";
+    document.getElementById('view-story-content').innerText = story.content;
+}
+
+// Profile Management Functions
+function saveInitialProfile() {
+    const name = document.getElementById('setup-name').value.trim();
+    const username = document.getElementById('setup-username').value.trim();
+    const gender = document.getElementById('setup-gender').value;
+    const age = parseInt(document.getElementById('setup-age').value) || 20;
+    const location = document.getElementById('setup-location').value.trim();
+    const hobbies = document.getElementById('setup-hobbies').value.trim();
+    const bio = document.getElementById('setup-bio').value.trim();
+
+    if(name) userProfile.name = name;
+    if(username) userProfile.username = username.startsWith('@') ? username : '@' + username;
+    userProfile.gender = gender;
+    userProfile.age = age;
+    if(location) userProfile.location = location;
+    if(hobbies) userProfile.hobbies = hobbies;
+    if(bio) userProfile.bio = bio;
+    userProfile.avatar = userProfile.name.charAt(0).toUpperCase();
+
+    goTo('home');
+}
+
+function toggleEditProfileMode() {
+    const box = document.getElementById('edit-profile-box');
+    if(box.style.display === 'none' || box.style.display === '') {
+        box.style.display = 'block';
+        document.getElementById('edit-name').value = userProfile.name;
+        document.getElementById('edit-username').value = userProfile.username;
+        document.getElementById('edit-gender').value = userProfile.gender;
+        document.getElementById('edit-age').value = userProfile.age;
+        document.getElementById('edit-location').value = userProfile.location;
+        document.getElementById('edit-hobbies').value = userProfile.hobbies;
+        document.getElementById('edit-bio').value = userProfile.bio;
+    } else {
+        box.style.display = 'none';
+    }
+}
+
+function saveProfileChanges() {
+    const name = document.getElementById('edit-name').value.trim();
+    const username = document.getElementById('edit-username').value.trim();
+    const gender = document.getElementById('edit-gender').value;
+    const age = parseInt(document.getElementById('edit-age').value) || userProfile.age;
+    const location = document.getElementById('edit-location').value.trim();
+    const hobbies = document.getElementById('edit-hobbies').value.trim();
+    const bio = document.getElementById('edit-bio').value.trim();
+
+    if(name) userProfile.name = name;
+    if(username) userProfile.username = username.startsWith('@') ? username : '@' + username;
+    userProfile.gender = gender;
+    userProfile.age = age;
+    if(location) userProfile.location = location;
+    if(hobbies) userProfile.hobbies = hobbies;
+    if(bio) userProfile.bio = bio;
+    userProfile.avatar = userProfile.name.charAt(0).toUpperCase();
+
+    document.getElementById('edit-profile-box').style.display = 'none';
+    updateProfileUI();
+}
+
+function updateProfileUI() {
+    document.getElementById('profile-display-name').innerText = userProfile.name;
+    document.getElementById('profile-display-username').innerText = userProfile.username;
+    document.getElementById('profile-display-details').innerText = `${userProfile.gender} | ${userProfile.age} yrs | ${userProfile.location}`;
+    document.getElementById('profile-display-bio').innerText = userProfile.bio;
+    document.getElementById('profile-avatar-box').innerText = userProfile.avatar;
+
+    const myPostsCount = posts.filter(p => p.isMyPost).length;
+    document.getElementById('count-posts').innerText = myPostsCount;
+    document.getElementById('count-followers').innerText = userStats.followersList.length;
+    document.getElementById('count-following').innerText = userStats.followingList.length;
+
+    renderProfileGrid();
+}
+
+// AI Match Screen Handler
+function openAiMatchScreen() {
+    goTo('aimatch');
+    const promptBox = document.getElementById('ai-match-setup-prompt');
+    const resultsBox = document.getElementById('ai-match-results-box');
+    const card = document.getElementById('ai-matched-profile-card');
+
+    card.style.display = 'none';
+
+    if (!userProfile.age || !userProfile.location || !userProfile.hobbies) {
+        promptBox.style.display = 'block';
+        resultsBox.style.display = 'none';
+        document.getElementById('ai-req-age').value = userProfile.age || '';
+        document.getElementById('ai-req-location').value = userProfile.location || '';
+        document.getElementById('ai-req-hobbies').value = userProfile.hobbies || '';
+    } else {
+        promptBox.style.display = 'none';
+        resultsBox.style.display = 'block';
+    }
+}
+
+function saveAiPreferences() {
+    const age = parseInt(document.getElementById('ai-req-age').value);
+    const location = document.getElementById('ai-req-location').value.trim();
+    const hobbies = document.getElementById('ai-req-hobbies').value.trim();
+
+    if(!age || !location || !hobbies) {
+        alert("Please fill all preference fields!");
+        return;
+    }
+
+    userProfile.age = age;
+    userProfile.location = location;
+    userProfile.hobbies = hobbies;
+
+    alert("Preferences saved successfully!");
+    openAiMatchScreen();
+}
+
+// AI Matching Logic
+function runAiMatching() {
+    const targetGenderToMatch = userProfile.gender === 'Male' ? 'Female' : 'Male';
+    const eligiblePool = realUsersDatabase.filter(u => u.gender === targetGenderToMatch);
+
+    if (eligiblePool.length === 0) {
+        alert("No suitable real matches found right now!");
+        return;
+    }
+
+    let bestMatch = eligiblePool[0];
+    let maxScore = -1;
+
+    eligiblePool.forEach(u => {
+        let score = 0;
+        if (u.location.toLowerCase() === userProfile.location.toLowerCase()) score += 5;
+        if (Math.abs(u.age - userProfile.age) <= 3) score += 3;
+        
+        const userHobbiesArr = userProfile.hobbies.toLowerCase().split(',').map(h => h.trim());
+        const targetHobbiesArr = u.hobbies.toLowerCase().split(',').map(h => h.trim());
+        const commonHobbies = userHobbiesArr.filter(h => targetHobbiesArr.includes(h));
+        score += commonHobbies.length * 2;
+
+        if (score > maxScore) {
+            maxScore = score;
+            bestMatch = u;
+        }
+    });
+
+    currentAiMatchedUser = bestMatch;
+
+    const card = document.getElementById('ai-matched-profile-card');
+    card.style.display = 'block';
+
+    document.getElementById('matched-avatar').innerText = bestMatch.name.charAt(0);
+    document.getElementById('matched-name').innerText = bestMatch.name;
+    document.getElementById('matched-username').innerText = bestMatch.username;
+    document.getElementById('matched-meta').innerText = `Age: ${bestMatch.age} yrs | Location: ${bestMatch.location} (${bestMatch.gender})`;
+    document.getElementById('matched-hobbies').innerText = `Hobbies: ${bestMatch.hobbies}`;
+}
+
+function followMatchedUser() {
+    if(!currentAiMatchedUser) return;
+    toggleFollowUser(currentAiMatchedUser.username);
+}
+
+function chatWithMatchedUser() {
+    if(!currentAiMatchedUser) return;
+    openChatWith(currentAiMatchedUser.username);
+}
+
+// Follow / Unfollow System
+function toggleFollowUser(targetUserHandle) {
+    const handle = targetUserHandle.startsWith('@' ) ? targetUserHandle : '@' + targetUserHandle.toLowerCase().replace(/\s+/g, '_');
+    const index = userStats.followingList.indexOf(handle);
+
+    if (index > -1) {
+        userStats.followingList.splice(index, 1);
+        alert("Unfollowed " + handle);
+    } else {
+        userStats.followingList.push(handle);
+        userStats.followersList.push("@fan_" + Math.floor(Math.random() * 1000));
+        addNotification(`${handle} started following you 👤`);
+        alert("Successfully followed " + handle);
+    }
+    updateProfileUI();
+}
+
+function openFollowersList() {
+    const box = document.getElementById('connections-view-box');
+    const title = document.getElementById('connections-title');
+    const content = document.getElementById('connections-list-content');
+    
+    title.innerText = "Followers (" + userStats.followersList.length + ")";
+    box.style.display = 'block';
+    content.innerHTML = '';
+
+    if(userStats.followersList.length === 0) {
+        content.innerHTML = "No followers yet.";
+        return;
+    }
+
+    userStats.followersList.forEach((follower, idx) => {
+        content.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span>${follower}</span>
+            <button onclick="removeFollower(${idx})" style="background:#e11d48; color:#fff; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;">Remove</button>
+        </div>`;
+    });
+}
+
+function openFollowingList() {
+    const box = document.getElementById('connections-view-box');
+    const title = document.getElementById('connections-title');
+    const content = document.getElementById('connections-list-content');
+    
+    title.innerText = "Following (" + userStats.followingList.length + ")";
+    box.style.display = 'block';
+    content.innerHTML = '';
+
+    if(userStats.followingList.length === 0) {
+        content.innerHTML = "Not following anyone.";
+        return;
+    }
+
+    userStats.followingList.forEach((following, idx) => {
+        content.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span>${following}</span>
+            <button onclick="unfollowUser(${idx})" style="background:#e11d48; color:#fff; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;">Unfollow</button>
+        </div>`;
+    });
+}
+
+function removeFollower(index) {
+    userStats.followersList.splice(index, 1);
+    openFollowersList();
+    updateProfileUI();
+}
+
+function unfollowUser(index) {
+    userStats.followingList.splice(index, 1);
+    openFollowingList();
+    updateProfileUI();
+}
+
+// Direct Messaging Chat Functions
+function openChatWith(userHandle) {
+    activeChatUser = userHandle;
+    goTo('messages');
+    
+    const chatBox = document.getElementById('active-chat-box');
+    const receiverTitle = document.getElementById('chat-receiver-name');
+    
+    chatBox.style.display = 'block';
+    receiverTitle.innerText = "Chat with " + userHandle;
+
+    renderChatMessages();
+}
+
+function closeChatWindow() {
+    activeChatUser = null;
+    document.getElementById('active-chat-box').style.display = 'none';
+}
+
+function renderChatMessages() {
+    const container = document.getElementById('chat-messages-container');
+    if (!container || !activeChatUser) return;
+
+    container.innerHTML = '';
+    if (!chatConversations[activeChatUser]) {
+        chatConversations[activeChatUser] = [];
+    }
+
+    const messages = chatConversations[activeChatUser];
+    if (messages.length === 0) {
+        container.innerHTML = '<div style="color: #888; text-align: center;">No messages yet. Say hello!</div>';
+        return;
+    }
+
+    messages.forEach(msg => {
+        const isMe = msg.sender === userProfile.username;
+        const alignStyle = isMe ? "text-align: right; background: #25
