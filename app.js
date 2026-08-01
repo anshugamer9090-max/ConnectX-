@@ -3313,3 +3313,553 @@ function renderFeed() {
         let musicTag = post.music ? `<div style="font-size: 10px; color: #a855f7; margin-bottom: 4px;">🎵 Playing: ${post.music}</div>` : '';
         let commentCount = post.comments ? post.comments.length : 0;
         let reelBadge = post.isReel ? `<span styl
+// ConnectX Master Logic - Added 24-Hour Stories Feature
+
+function goTo(screenName) {
+    const screens = document.querySelectorAll('.screen');
+    screens.forEach(s => s.classList.remove('active'));
+    
+    const targetScreen = document.getElementById('screen-' + screenName);
+    if (targetScreen) {
+        targetScreen.classList.add('active');
+    }
+    
+    const badge = document.getElementById('badge');
+    if (badge) {
+        badge.innerText = screenName.toUpperCase();
+    }
+
+    if (screenName === 'home') {
+        renderStoriesTray();
+        renderFeed();
+    } else if (screenName === 'userprofile') {
+        updateProfileUI();
+    } else if (screenName === 'reels') {
+        renderReelsFeed();
+    } else if (screenName === 'notifications') {
+        renderNotifications();
+    }
+}
+
+// User Profile Data
+let userProfile = {
+    name: "ConnectX Member",
+    username: "@connectx_user",
+    gender: "Male",
+    age: 21,
+    location: "Delhi",
+    hobbies: "coding, music, gaming",
+    bio: "Welcome to my profile!",
+    avatar: "C"
+};
+
+let userStats = {
+    followersList: [],
+    followingList: []
+};
+
+// Real User Database Pool for AI Matching
+let realUsersDatabase = [
+    { name: "Priya Sharma", username: "@priya_sharma", gender: "Female", age: 20, location: "Delhi", hobbies: "music, reading, art", bio: "Art lover & coder" },
+    { name: "Aarav Gupta", username: "@aarav_g", gender: "Male", age: 22, location: "Mumbai", hobbies: "gaming, coding, cricket", bio: "Tech enthusiast" },
+    { name: "Sneha Patel", username: "@sneha_p", gender: "Female", age: 21, location: "Bangalore", hobbies: "dancing, coding, travel", bio: "Wanderlust" },
+    { name: "Rohan Verma", username: "@rohan_v", gender: "Male", age: 23, location: "Delhi", hobbies: "music, gym, photography", bio: "Fitness & Shutterbug" }
+];
+
+let posts = [];
+let storiesList = [
+    { id: 1, name: "Priya", username: "@priya_sharma", content: "Enjoying a wonderful morning! ☕", time: Date.now() },
+    { id: 2, name: "Aarav", username: "@aarav_g", content: "Coding new features all day 🚀", time: Date.now() }
+];
+
+let chatConversations = {};
+let notificationsList = [];
+let activeChatUser = null;
+let activePostIdForComments = null;
+let currentAiMatchedUser = null;
+
+// Notification Helper
+function addNotification(text) {
+    notificationsList.unshift({
+        id: Date.now(),
+        text: text,
+        time: "Just now"
+    });
+}
+
+function renderNotifications() {
+    const container = document.getElementById('notifications-list-container');
+    if (!container) return;
+
+    container.innerHTML = '';
+    if (notificationsList.length === 0) {
+        container.innerHTML = '<p style="color: #888; text-align: center; font-size: 11px;">No new notifications yet.</p>';
+        return;
+    }
+
+    notificationsList.forEach(notif => {
+        container.innerHTML += `
+            <div style="background: #1a1a24; padding: 8px; border-radius: 6px; border: 1px solid #2a2a3c; display: flex; justify-content: space-between; align-items: center;">
+                <span>${notif.text}</span>
+                <span style="font-size: 9px; color: #888;">${notif.time}</span>
+            </div>
+        `;
+    });
+}
+
+// Stories System Logic (24-Hour Expiry Feature)
+function openAddStoryScreen() {
+    goTo('addstory');
+}
+
+function publishStory() {
+    const content = document.getElementById('story-text-input').value.trim();
+    if (content === "") {
+        alert("Please write something for your story!");
+        return;
+    }
+
+    // Add new story with timestamp for 24-hr expiry calculation
+    storiesList.unshift({
+        id: Date.now(),
+        name: userProfile.name,
+        username: userProfile.username,
+        content: content,
+        time: Date.now()
+    });
+
+    document.getElementById('story-text-input').value = "";
+    alert("Story uploaded successfully! It will expire in 24 hours.");
+    goTo('home');
+}
+
+function renderStoriesTray() {
+    const container = document.getElementById('stories-tray-container');
+    if (!container) return;
+
+    // Filter out stories older than 24 hours (24 * 60 * 60 * 1000 ms)
+    const twentyFourHours = 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    storiesList = storiesList.filter(s => (now - s.time) < twentyFourHours);
+
+    // Keep the "Your Story" button at the beginning
+    container.innerHTML = `
+        <div onclick="openAddStoryScreen()" style="text-align: center; font-size: 10px; cursor: pointer; display: inline-block;">
+            <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #a855f7, #ec4899); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff; margin: 0 auto 2px auto;">+</div>
+            Your Story
+        </div>
+    `;
+
+    storiesList.forEach(story => {
+        container.innerHTML += `
+            <div onclick="viewStory(${story.id})" style="text-align: center; font-size: 10px; cursor: pointer; display: inline-block;">
+                <div style="width: 44px; height: 44px; border-radius: 50%; border: 2px solid #ec4899; background: #252533; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff; margin: 0 auto 2px auto;">${story.name.charAt(0)}</div>
+                ${story.name}
+            </div>
+        `;
+    });
+}
+
+function viewStory(storyId) {
+    const story = storiesList.find(s => s.id === storyId);
+    if (!story) return;
+
+    goTo('viewstory');
+    document.getElementById('view-story-username').innerText = story.name + " (" + story.username + ")";
+    document.getElementById('view-story-content').innerText = story.content;
+}
+
+// Profile Management Functions
+function saveInitialProfile() {
+    const name = document.getElementById('setup-name').value.trim();
+    const username = document.getElementById('setup-username').value.trim();
+    const gender = document.getElementById('setup-gender').value;
+    const age = parseInt(document.getElementById('setup-age').value) || 20;
+    const location = document.getElementById('setup-location').value.trim();
+    const hobbies = document.getElementById('setup-hobbies').value.trim();
+    const bio = document.getElementById('setup-bio').value.trim();
+
+    if(name) userProfile.name = name;
+    if(username) userProfile.username = username.startsWith('@') ? username : '@' + username;
+    userProfile.gender = gender;
+    userProfile.age = age;
+    if(location) userProfile.location = location;
+    if(hobbies) userProfile.hobbies = hobbies;
+    if(bio) userProfile.bio = bio;
+    userProfile.avatar = userProfile.name.charAt(0).toUpperCase();
+
+    goTo('home');
+}
+
+function toggleEditProfileMode() {
+    const box = document.getElementById('edit-profile-box');
+    if(box.style.display === 'none' || box.style.display === '') {
+        box.style.display = 'block';
+        document.getElementById('edit-name').value = userProfile.name;
+        document.getElementById('edit-username').value = userProfile.username;
+        document.getElementById('edit-gender').value = userProfile.gender;
+        document.getElementById('edit-age').value = userProfile.age;
+        document.getElementById('edit-location').value = userProfile.location;
+        document.getElementById('edit-hobbies').value = userProfile.hobbies;
+        document.getElementById('edit-bio').value = userProfile.bio;
+    } else {
+        box.style.display = 'none';
+    }
+}
+
+function saveProfileChanges() {
+    const name = document.getElementById('edit-name').value.trim();
+    const username = document.getElementById('edit-username').value.trim();
+    const gender = document.getElementById('edit-gender').value;
+    const age = parseInt(document.getElementById('edit-age').value) || userProfile.age;
+    const location = document.getElementById('edit-location').value.trim();
+    const hobbies = document.getElementById('edit-hobbies').value.trim();
+    const bio = document.getElementById('edit-bio').value.trim();
+
+    if(name) userProfile.name = name;
+    if(username) userProfile.username = username.startsWith('@') ? username : '@' + username;
+    userProfile.gender = gender;
+    userProfile.age = age;
+    if(location) userProfile.location = location;
+    if(hobbies) userProfile.hobbies = hobbies;
+    if(bio) userProfile.bio = bio;
+    userProfile.avatar = userProfile.name.charAt(0).toUpperCase();
+
+    document.getElementById('edit-profile-box').style.display = 'none';
+    updateProfileUI();
+}
+
+function updateProfileUI() {
+    document.getElementById('profile-display-name').innerText = userProfile.name;
+    document.getElementById('profile-display-username').innerText = userProfile.username;
+    document.getElementById('profile-display-details').innerText = `${userProfile.gender} | ${userProfile.age} yrs | ${userProfile.location}`;
+    document.getElementById('profile-display-bio').innerText = userProfile.bio;
+    document.getElementById('profile-avatar-box').innerText = userProfile.avatar;
+
+    const myPostsCount = posts.filter(p => p.isMyPost).length;
+    document.getElementById('count-posts').innerText = myPostsCount;
+    document.getElementById('count-followers').innerText = userStats.followersList.length;
+    document.getElementById('count-following').innerText = userStats.followingList.length;
+
+    renderProfileGrid();
+}
+
+// AI Match Screen Handler
+function openAiMatchScreen() {
+    goTo('aimatch');
+    const promptBox = document.getElementById('ai-match-setup-prompt');
+    const resultsBox = document.getElementById('ai-match-results-box');
+    const card = document.getElementById('ai-matched-profile-card');
+
+    card.style.display = 'none';
+
+    if (!userProfile.age || !userProfile.location || !userProfile.hobbies) {
+        promptBox.style.display = 'block';
+        resultsBox.style.display = 'none';
+        document.getElementById('ai-req-age').value = userProfile.age || '';
+        document.getElementById('ai-req-location').value = userProfile.location || '';
+        document.getElementById('ai-req-hobbies').value = userProfile.hobbies || '';
+    } else {
+        promptBox.style.display = 'none';
+        resultsBox.style.display = 'block';
+    }
+}
+
+function saveAiPreferences() {
+    const age = parseInt(document.getElementById('ai-req-age').value);
+    const location = document.getElementById('ai-req-location').value.trim();
+    const hobbies = document.getElementById('ai-req-hobbies').value.trim();
+
+    if(!age || !location || !hobbies) {
+        alert("Please fill all preference fields!");
+        return;
+    }
+
+    userProfile.age = age;
+    userProfile.location = location;
+    userProfile.hobbies = hobbies;
+
+    alert("Preferences saved successfully!");
+    openAiMatchScreen();
+}
+
+// AI Matching Logic
+function runAiMatching() {
+    const targetGenderToMatch = userProfile.gender === 'Male' ? 'Female' : 'Male';
+    const eligiblePool = realUsersDatabase.filter(u => u.gender === targetGenderToMatch);
+
+    if (eligiblePool.length === 0) {
+        alert("No suitable real matches found right now!");
+        return;
+    }
+
+    let bestMatch = eligiblePool[0];
+    let maxScore = -1;
+
+    eligiblePool.forEach(u => {
+        let score = 0;
+        if (u.location.toLowerCase() === userProfile.location.toLowerCase()) score += 5;
+        if (Math.abs(u.age - userProfile.age) <= 3) score += 3;
+        
+        const userHobbiesArr = userProfile.hobbies.toLowerCase().split(',').map(h => h.trim());
+        const targetHobbiesArr = u.hobbies.toLowerCase().split(',').map(h => h.trim());
+        const commonHobbies = userHobbiesArr.filter(h => targetHobbiesArr.includes(h));
+        score += commonHobbies.length * 2;
+
+        if (score > maxScore) {
+            maxScore = score;
+            bestMatch = u;
+        }
+    });
+
+    currentAiMatchedUser = bestMatch;
+
+    const card = document.getElementById('ai-matched-profile-card');
+    card.style.display = 'block';
+
+    document.getElementById('matched-avatar').innerText = bestMatch.name.charAt(0);
+    document.getElementById('matched-name').innerText = bestMatch.name;
+    document.getElementById('matched-username').innerText = bestMatch.username;
+    document.getElementById('matched-meta').innerText = `Age: ${bestMatch.age} yrs | Location: ${bestMatch.location} (${bestMatch.gender})`;
+    document.getElementById('matched-hobbies').innerText = `Hobbies: ${bestMatch.hobbies}`;
+}
+
+function followMatchedUser() {
+    if(!currentAiMatchedUser) return;
+    toggleFollowUser(currentAiMatchedUser.username);
+}
+
+function chatWithMatchedUser() {
+    if(!currentAiMatchedUser) return;
+    openChatWith(currentAiMatchedUser.username);
+}
+
+// Follow / Unfollow System
+function toggleFollowUser(targetUserHandle) {
+    const handle = targetUserHandle.startsWith('@') ? targetUserHandle : '@' + targetUserHandle.toLowerCase().replace(/\s+/g, '_');
+    const index = userStats.followingList.indexOf(handle);
+
+    if (index > -1) {
+        userStats.followingList.splice(index, 1);
+        alert("Unfollowed " + handle);
+    } else {
+        userStats.followingList.push(handle);
+        userStats.followersList.push("@fan_" + Math.floor(Math.random() * 1000));
+        addNotification(`${handle} started following you 👤`);
+        alert("Successfully followed " + handle);
+    }
+    updateProfileUI();
+}
+
+function openFollowersList() {
+    const box = document.getElementById('connections-view-box');
+    const title = document.getElementById('connections-title');
+    const content = document.getElementById('connections-list-content');
+    
+    title.innerText = "Followers (" + userStats.followersList.length + ")";
+    box.style.display = 'block';
+    content.innerHTML = '';
+
+    if(userStats.followersList.length === 0) {
+        content.innerHTML = "No followers yet.";
+        return;
+    }
+
+    userStats.followersList.forEach((follower, idx) => {
+        content.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span>${follower}</span>
+            <button onclick="removeFollower(${idx})" style="background:#e11d48; color:#fff; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;">Remove</button>
+        </div>`;
+    });
+}
+
+function openFollowingList() {
+    const box = document.getElementById('connections-view-box');
+    const title = document.getElementById('connections-title');
+    const content = document.getElementById('connections-list-content');
+    
+    title.innerText = "Following (" + userStats.followingList.length + ")";
+    box.style.display = 'block';
+    content.innerHTML = '';
+
+    if(userStats.followingList.length === 0) {
+        content.innerHTML = "Not following anyone.";
+        return;
+    }
+
+    userStats.followingList.forEach((following, idx) => {
+        content.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span>${following}</span>
+            <button onclick="unfollowUser(${idx})" style="background:#e11d48; color:#fff; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;">Unfollow</button>
+        </div>`;
+    });
+}
+
+function removeFollower(index) {
+    userStats.followersList.splice(index, 1);
+    openFollowersList();
+    updateProfileUI();
+}
+
+function unfollowUser(index) {
+    userStats.followingList.splice(index, 1);
+    openFollowingList();
+    updateProfileUI();
+}
+
+// Direct Messaging Chat Functions
+function openChatWith(userHandle) {
+    activeChatUser = userHandle;
+    goTo('messages');
+    
+    const chatBox = document.getElementById('active-chat-box');
+    const receiverTitle = document.getElementById('chat-receiver-name');
+    
+    chatBox.style.display = 'block';
+    receiverTitle.innerText = "Chat with " + userHandle;
+
+    renderChatMessages();
+}
+
+function closeChatWindow() {
+    activeChatUser = null;
+    document.getElementById('active-chat-box').style.display = 'none';
+}
+
+function renderChatMessages() {
+    const container = document.getElementById('chat-messages-container');
+    if (!container || !activeChatUser) return;
+
+    container.innerHTML = '';
+    if (!chatConversations[activeChatUser]) {
+        chatConversations[activeChatUser] = [];
+    }
+
+    const messages = chatConversations[activeChatUser];
+    if (messages.length === 0) {
+        container.innerHTML = '<div style="color: #888; text-align: center;">No messages yet. Say hello!</div>';
+        return;
+    }
+
+    messages.forEach(msg => {
+        const isMe = msg.sender === userProfile.username;
+        const alignStyle = isMe ? "text-align: right; background: #252533; color: #fff;" : "text-align: left; background: #1a1a24; color: #a855f7;";
+        
+        container.innerHTML += `
+            <div style="padding: 6px 8px; border-radius: 6px; font-size: 11px; ${alignStyle}">
+                <div style="font-size: 8px; color: #888; margin-bottom: 2px;">${msg.sender}</div>
+                <span>${msg.text}</span>
+            </div>
+        `;
+    });
+    container.scrollTop = container.scrollHeight;
+}
+
+function sendDirectMessage() {
+    const input = document.getElementById('chat-input-text');
+    const text = input ? input.value.trim() : '';
+
+    if (text === "" || !activeChatUser) return;
+
+    if (!chatConversations[activeChatUser]) {
+        chatConversations[activeChatUser] = [];
+    }
+
+    chatConversations[activeChatUser].push({
+        sender: userProfile.username,
+        text: text
+    });
+
+    input.value = "";
+    renderChatMessages();
+}
+
+// Comments Feature Logic
+function openComments(postId) {
+    activePostIdForComments = postId;
+    goTo('comments');
+    renderCommentsList();
+}
+
+function renderCommentsList() {
+    const container = document.getElementById('comments-list-box');
+    if (!container) return;
+
+    const post = posts.find(p => p.id === activePostIdForComments);
+    if (!post) return;
+
+    container.innerHTML = '';
+
+    if (!post.comments || post.comments.length === 0) {
+        container.innerHTML = '<p style="color: #888; text-align: center;">No comments yet. Be the first!</p>';
+        return;
+    }
+
+    post.comments.forEach(c => {
+        container.innerHTML += `
+            <div style="background: #1a1a24; padding: 6px 8px; border-radius: 6px; margin-bottom: 6px; border: 1px solid #2a2a3c;">
+                <strong style="color: #a855f7;">${c.user}</strong>: <span>${c.text}</span>
+            </div>
+        `;
+    });
+}
+
+function postComment() {
+    const input = document.getElementById('comment-input');
+    const text = input ? input.value.trim() : '';
+
+    if (text === "") {
+        alert("Please write a comment!");
+        return;
+    }
+
+    const post = posts.find(p => p.id === activePostIdForComments);
+    if (post) {
+        if (!post.comments) post.comments = [];
+        post.comments.push({
+            user: userProfile.username,
+            text: text
+        });
+        input.value = "";
+        addNotification(`${userProfile.username} commented on your post 💬`);
+        renderCommentsList();
+        renderFeed();
+    }
+}
+
+// Create Post / Reel Logic
+function addNewPost() {
+    const captionInput = document.getElementById('post-caption-input');
+    const captionText = captionInput ? captionInput.value.trim() : '';
+    const selectedFilter = document.getElementById('filter-select').value;
+    const selectedMusic = document.getElementById('music-select').value;
+
+    if (captionText === "") {
+        alert("Please write something for your post!");
+        return;
+    }
+
+    const isReelPost = selectedMusic !== "";
+
+    const newPost = {
+        id: posts.length + 1,
+        user: userProfile.name,
+        username: userProfile.username,
+        caption: captionText,
+        likes: 0,
+        liked: false,
+        isMyPost: true,
+        filter: selectedFilter,
+        music: selectedMusic,
+        isReel: isReelPost,
+        comments: []
+    };
+
+    posts.unshift(newPost);
+    captionInput.value = "";
+    goTo('home');
+}
+
+// Render Reels Feed
+function renderReelsFeed() {
+    c
