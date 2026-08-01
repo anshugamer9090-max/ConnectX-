@@ -346,3 +346,28 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div id="screen-home" class="container screen">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3c; padding-bottom: 8px; margin-bottom: 12px;">
+        <h3 style="margin: 0; font-size: 15px;">🏠 ConnectX Feed</h3>
+        <span style="font-size: 12px; cursor: pointer; color: #a855f7;" onclick="goTo('messages')">💬 Messages</span>
+    </div>
+
+    <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 12px;">
+        <div style="text-align: center; font-size: 10px;">
+            <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #a855f7, #ec4899); display: flex; align-items: center; justify-content: center; font-weight: bold;">+</div>
+            Your Story
+        </div>
+    </div>
+
+    <div id="posts-container">
+        </div>
+
+    <div style="display: flex; justify-content: space-around; margin-top: 15px; border-top: 1px solid #2a2a3c; padding-top: 10px; font-size: 11px; color: #888;">
+        <span style="color: #a855f7; font-weight: bold; cursor: pointer;">Home</span>
+        <span style="cursor: pointer;" onclick="goTo('explore')">Explore</span>
+        <span style="cursor: pointer;" onclick="goTo('create')">➕ Create</span>
+        <span style="cursor: pointer;" onclick="goTo('reels')">Reels</span>
+        <span style="cursor: pointer;" onclick="goTo('userprofile')">Profile</span>
+    </div>
+    </div>
+    
