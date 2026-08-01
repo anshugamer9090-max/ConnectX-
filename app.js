@@ -4388,6 +4388,29 @@ window.addEventListener('DOMContentLoaded', () => {
     const btn = document.getElementById('theme-toggle-btn');
     if (btn) {
         btn.innerText = savedTheme === 'light' ? "🌙 Dark" : "☀️ Light";
+ // ConnectX Share Post Feature Logic
+function sharePost(postId) {
+    const post = posts.find(p => p.id === postId);
+    if (!post) return;
+
+    const shareText = `Check out this amazing post on ConnectX by ${post.user}: "${post.caption}"`;
+
+    // Agar browser Web Share API support karta hai (Mobile/Modern Browsers)
+    if (navigator.share) {
+        navigator.share({
+            title: 'ConnectX Post',
+            text: shareText,
+            url: window.location.href,
+        })
+        .then(() => console.log('Successfully shared'))
+        .catch((error) => console.log('Error sharing:', error));
+    } else {
+        // Fallback: Clipboard me copy karlo ya WhatsApp link generate karo
+        const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
+        window.open(whatsappUrl, '_blank');
     }
+}
+    }
+    
 });
         
