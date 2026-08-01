@@ -2005,3 +2005,281 @@
             <select id="edit-gender
     <button class="btn-outline" onclick="goTo('home')" style="margin-top: 15px;">Back to Home</button>
 </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ConnectX - Master Social App</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="header">
+        <div>
+            <h1 style="margin: 0; font-size: 20px;">ConnectX</h1>
+            <p style="font-size: 11px; color: #888; margin: 2px 0 0 0;">Master Social Media Platform</p>
+        </div>
+        <span id="badge" style="background: #1f1f2e; color: #a855f7; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold;">Splash</span>
+    </div>
+
+    <div id="screen-splash" class="container screen active">
+        <h2>⚡ Splash Screen</h2>
+        <p style="font-size: 13px; color: #ccc;">Loading assets & checking auth...</p>
+        <button class="btn" onclick="goTo('welcome')">Proceed to App</button>
+    </div>
+
+    <div id="screen-welcome" class="container screen">
+        <h2>🚀 Welcome to ConnectX</h2>
+        <p style="font-size: 13px; color: #ccc;">Social + Video + Messaging + AI Discovery</p>
+        <button class="btn" onclick="goTo('login')">Login</button>
+        <button class="btn-outline" onclick="goTo('signup')">Create Account</button>
+    </div>
+
+    <div id="screen-login" class="container screen">
+        <h2>🔐 Login</h2>
+        <input type="email" placeholder="Email address">
+        <input type="password" placeholder="Password">
+        <button class="btn" onclick="goTo('home')">Login to App</button>
+        <p class="link" onclick="goTo('welcome')">Back</p>
+    </div>
+
+    <div id="screen-signup" class="container screen">
+        <h2>📝 Sign Up</h2>
+        <input type="email" placeholder="Email address">
+        <input type="password" placeholder="Password">
+        <button class="btn" onclick="goTo('profile')">Register</button>
+        <p class="link" onclick="goTo('welcome')">Back</p>
+    </div>
+
+    <div id="screen-profile" class="container screen">
+        <h2>👤 Profile Setup</h2>
+        <input type="text" id="setup-name" placeholder="Full Name">
+        <input type="text" id="setup-username" placeholder="Unique Username (@tag)">
+        
+        <label style="font-size: 11px; color: #a855f7; display:block; margin-top:4px;">Gender:</label>
+        <select id="setup-gender" style="width:100%; padding:6px; margin:2px 0 6px 0; background:#1a1a24; border:1px solid #2a2a3c; border-radius:6px; color:#fff; font-size:11px;">
+            <option value="Male">Male (Boy)</option>
+            <option value="Female">Female (Girl)</option>
+        </select>
+
+        <input type="number" id="setup-age" placeholder="Age" style="margin-bottom:6px;">
+        <input type="text" id="setup-location" placeholder="City / Location" style="margin-bottom:6px;">
+        <input type="text" id="setup-hobbies" placeholder="Hobbies (comma separated: coding, reading, music)" style="margin-bottom:6px;">
+        
+        <textarea id="setup-bio" placeholder="Write your bio..." style="width:100%; padding:8px; margin:2px 0; background:#1a1a24; border:1px solid #2a2a3c; border-radius:8px; color:#fff; box-sizing:border-box; font-size:12px; resize:none; height:40px;"></textarea>
+        <button class="btn" onclick="saveInitialProfile()" style="margin-top:6px;">Save & Continue</button>
+    </div>
+
+    <div id="screen-home" class="container screen">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3c; padding-bottom: 8px; margin-bottom: 12px;">
+            <h3 style="margin: 0; font-size: 15px;">🏠 ConnectX Feed</h3>
+            <div>
+                <span style="font-size: 11px; cursor: pointer; color: #ec4899; margin-right: 6px;" onclick="openAiMatchScreen()">🤖 AI Match</span>
+                <span style="font-size: 11px; cursor: pointer; color: #38bdf8; margin-right: 6px;" onclick="goTo('notifications')">🔔 Notifs</span>
+                <span style="font-size: 11px; cursor: pointer; color: #a855f7;" onclick="goTo('messages')">💬 Messages</span>
+            </div>
+        </div>
+
+        <div id="stories-tray-container" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 12px; white-space: nowrap;">
+            <div onclick="openAddStoryScreen()" style="text-align: center; font-size: 10px; cursor: pointer; display: inline-block;">
+                <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #a855f7, #ec4899); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff; margin: 0 auto 2px auto;">+</div>
+                Your Story
+            </div>
+        </div>
+
+        <div id="posts-container"></div>
+
+        <div style="display: flex; justify-content: space-around; margin-top: 15px; border-top: 1px solid #2a2a3c; padding-top: 10px; font-size: 11px; color: #888;">
+            <span style="cursor: pointer;" onclick="goTo('home')">Home</span>
+            <span style="color: #a855f7; font-weight: bold; cursor: pointer;" onclick="goTo('explore')">Explore</span>
+            <span style="cursor: pointer;" onclick="goTo('create')">➕ Create</span>
+            <span style="cursor: pointer;" onclick="goTo('reels')">Reels</span>
+            <span style="cursor: pointer;" onclick="goTo('userprofile')">Profile</span>
+        </div>
+    </div>
+
+    <div id="screen-comments" class="container screen">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3c; padding-bottom: 6px; margin-bottom: 10px;">
+            <h3 style="margin: 0; font-size: 15px;">💬 Comments</h3>
+            <span style="font-size: 12px; cursor: pointer; color: #a855f7;" onclick="goTo('home')">✕ Close</span>
+        </div>
+        
+        <div id="comments-list-box" style="max-height: 180px; overflow-y: auto; margin-bottom: 10px; font-size: 11px;"></div>
+
+        <div style="display: flex; gap: 6px;">
+            <input type="text" id="comment-input" placeholder="Add a comment..." style="margin: 0; font-size: 11px; padding: 6px;">
+            <button class="btn" style="width: auto; padding: 6px 10px; font-size: 11px;" onclick="postComment()">Post</button>
+        </div>
+    </div>
+
+    <div id="screen-aimatch" class="container screen">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3c; padding-bottom: 6px; margin-bottom: 10px;">
+            <h3 style="margin: 0; font-size: 15px; color: #ec4899;">🤖 AI Match Finder</h3>
+            <span style="font-size: 11px; cursor: pointer; color: #a855f7;" onclick="goTo('home')">✕ Close</span>
+        </div>
+
+        <div id="ai-match-setup-prompt" style="display:none; background: #1a1a24; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+            <p style="font-size: 11px; color: #ccc; margin: 0 0 6px 0;">Please complete your AI matching preferences first:</p>
+            <input type="number" id="ai-req-age" placeholder="Your Age" style="margin-bottom: 4px; font-size: 11px; padding: 4px;">
+            <input type="text" id="ai-req-location" placeholder="Your Location" style="margin-bottom: 4px; font-size: 11px; padding: 4px;">
+            <input type="text" id="ai-req-hobbies" placeholder="Your Hobbies (comma sep)" style="margin-bottom: 6px; font-size: 11px; padding: 4px;">
+            <button class="btn" style="font-size: 11px; padding: 6px;" onclick="saveAiPreferences()">Save Preferences</button>
+        </div>
+
+        <div id="ai-match-results-box">
+            <p style="font-size: 11px; color: #888; text-align: center;">Click below to find your ideal AI match based on age, location & hobbies!</p>
+            <button class="btn" style="background: linear-gradient(135deg, #a855f7, #ec4899); margin-top: 10px;" onclick="runAiMatching()">✨ Find AI Match Now</button>
+        </div>
+
+        <div id="ai-matched-profile-card" style="display:none; background: #1a1a24; border: 1px solid #2a2a3c; border-radius: 8px; padding: 10px; margin-top: 10px; text-align: center;">
+            <div id="matched-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: #ec4899; margin: 0 auto 6px auto; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">?</div>
+            <strong id="matched-name" style="font-size: 13px;">Name</strong>
+            <div id="matched-username" style="font-size: 10px; color: #888;">@username</div>
+            <div id="matched-meta" style="font-size: 10px; color: #a855f7; margin: 4px 0;">Age: 21 | Location: Delhi</div>
+            <p id="matched-hobbies" style="font-size: 10px; color: #ccc; margin: 4px 0;">Hobbies: music, coding</p>
+            <div style="display: flex; gap: 6px; justify-content: center; margin-top: 8px;">
+                <button class="btn" style="width: auto; padding: 4px 10px; font-size: 10px;" onclick="followMatchedUser()">Follow</button>
+                <button class="btn-outline" style="width: auto; padding: 4px 10px; font-size: 10px;" onclick="chatWithMatchedUser()">Direct Chat</button>
+            </div>
+        </div>
+
+        <button class="btn-outline" onclick="goTo('home')" style="margin-top: 15px;">Back to Home</button>
+    </div>
+
+    <div id="screen-notifications" class="container screen">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3c; padding-bottom: 6px; margin-bottom: 10px;">
+            <h3 style="margin: 0; font-size: 15px; color: #38bdf8;">🔔 Activity Notifications</h3>
+            <span style="font-size: 11px; cursor: pointer; color: #a855f7;" onclick="goTo('home')">✕ Close</span>
+        </div>
+
+        <div id="notifications-list-container" style="max-height: 220px; overflow-y: auto; font-size: 11px; display: flex; flex-direction: column; gap: 6px;"></div>
+
+        <button class="btn-outline" onclick="goTo('home')" style="margin-top: 15px;">Back to Home</button>
+    </div>
+
+    <div id="screen-addstory" class="container screen">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3c; padding-bottom: 6px; margin-bottom: 10px;">
+            <h3 style="margin: 0; font-size: 15px; color: #ec4899;">📸 Add 24hr Story</h3>
+            <span style="font-size: 11px; cursor: pointer; color: #a855f7;" onclick="goTo('home')">✕ Close</span>
+        </div>
+        <textarea id="story-text-input" placeholder="What's on your story today? (Photo/Text)..." style="width:100%; padding:8px; background:#1a1a24; border:1px solid #2a2a3c; border-radius:8px; color:#fff; font-size:12px; height:60px; margin-bottom:8px; resize:none;"></textarea>
+        <button class="btn" onclick="publishStory()">Upload Story (Expires in 24h)</button>
+        <button class="btn-outline" onclick="goTo('home')" style="margin-top: 6px;">Cancel</button>
+    </div>
+
+    <div id="screen-viewstory" class="container screen" style="text-align: center;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3c; padding-bottom: 6px; margin-bottom: 15px;">
+            <strong id="view-story-username" style="font-size: 13px; color: #a855f7;">Story Viewer</strong>
+            <span style="font-size: 11px; cursor: pointer; color: #fff;" onclick="goTo('home')">✕ Close</span>
+        </div>
+        <div id="view-story-content" style="background: #1a1a24; border: 1px solid #2a2a3c; border-radius: 10px; padding: 25px; min-height: 100px; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #fff; margin-bottom: 15px;"></div>
+        <p style="font-size: 10px; color: #888;">⏱️ This story disappears automatically after 24 hours.</p>
+        <button class="btn-outline" onclick="goTo('home')">Back to Home</button>
+    </div>
+
+    <div id="screen-explore" class="container screen">
+        <h3 style="font-size: 15px; margin-bottom: 8px;">🔍 Explore & Hashtags</h3>
+        <input type="text" id="explore-search-input" placeholder="Search users or #hashtags..." onkeyup="handleExploreSearch()" style="margin-bottom: 8px; font-size: 11px; padding: 6px;">
+        
+        <div style="margin-bottom: 8px;">
+            <p style="font-size: 10px; color: #a855f7; margin: 0 0 4px 0; font-weight: bold;">🔥 Trending Hashtags:</p>
+            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                <span onclick="filterByHashtag('#coding')" style="background: #1a1a24; border: 1px solid #2a2a3c; padding: 3px 8px; border-radius: 12px; font-size: 10px; cursor: pointer; color: #38bdf8;">#coding</span>
+                <span onclick="filterByHashtag('#music')" style="background: #1a1a24; border: 1px solid #2a2a3c; padding: 3px 8px; border-radius: 12px; font-size: 10px; cursor: pointer; color: #ec4899;">#music</span>
+                <span onclick="filterByHashtag('#travel')" style="background: #1a1a24; border: 1px solid #2a2a3c; padding: 3px 8px; border-radius: 12px; font-size: 10px; cursor: pointer; color: #a855f7;">#travel</span>
+                <span onclick="filterByHashtag('#tech')" style="background: #1a1a24; border: 1px solid #2a2a3c; padding: 3px 8px; border-radius: 12px; font-size: 10px; cursor: pointer; color: #38bdf8;">#tech</span>
+            </div>
+        </div>
+
+        <div id="explore-results-container" style="max-height: 160px; overflow-y: auto; font-size: 11px; display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px;">
+            <div style="background: #1a1a24; padding: 8px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong>Creator_Priya</strong>
+                    <div style="font-size: 9px; color: #888;">@priya_sharma</div>
+                </div>
+                <div>
+                    <button class="btn" style="width: auto; padding: 3px 6px; font-size: 9px; margin-right: 2px;" onclick="toggleFollowUser('Creator_Priya')">Follow</button>
+                    <button class="btn-outline" style="width: auto; padding: 3px 6px; font-size: 9px;" onclick="openChatWith('@priya_sharma')">Chat</button>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-outline" onclick="goTo('home')" style="margin-top: 4px;">Back to Home</button>
+    </div>
+
+    <div id="screen-create" class="container screen">
+        <h3 style="font-size: 16px;">➕ Create Post / Reel</h3>
+        
+        <div id="media-preview-box" style="width: 100%; height: 80px; background: #1a1a24; border: 2px dashed #2a2a3c; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #888; font-size: 12px; margin-bottom: 6px;">
+            Tap to upload photo/video
+        </div>
+
+        <label style="font-size: 11px; color: #a855f7;">Select Instagram Filter:</label>
+        <select id="filter-select" style="width:100%; padding:4px; margin:2px 0 6px 0; background:#1a1a24; border:1px solid #2a2a3c; border-radius:6px; color:#fff; font-size:11px;">
+            <option value="none">Normal (Standard)</option>
+            <option value="clarendon">Clarendon (High Contrast)</option>
+            <option value="gingham">Gingham (Vintage Warm)</option>
+            <option value="moon">Moon (B&W Classic)</option>
+        </select>
+
+        <label style="font-size: 11px; color: #a855f7;">Add Background Music:</label>
+        <select id="music-select" style="width:100%; padding:4px; margin:2px 0 6px 0; background:#1a1a24; border:1px solid #2a2a3c; border-radius:6px; color:#fff; font-size:11px;">
+            <option value="">-- Choose a Song --</option>
+            <option value="Blinding Lights - The Weeknd">Blinding Lights - The Weeknd</option>
+            <option value="Kesariya - Arijit Singh">Kesariya - Arijit Singh</option>
+            <option value="STAY - Justin Bieber">STAY - Justin Bieber</option>
+        </select>
+
+        <textarea id="post-caption-input" placeholder="Write a caption with hashtags (e.g., #coding)..." style="width:100%; padding:6px; margin:2px 0; background:#1a1a24; border:1px solid #2a2a3c; border-radius:8px; color:#fff; box-sizing:border-box; font-size:12px; resize:none; height:40px;"></textarea>
+        
+        <button class="btn" onclick="addNewPost()">Share Post</button>
+        <button class="btn-outline" onclick="goTo('home')">Cancel</button>
+    </div>
+
+    <div id="screen-reels" class="container screen">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3c; padding-bottom: 6px; margin-bottom: 8px;">
+            <h3 style="margin: 0; font-size: 15px;">🎬 Reels Feed</h3>
+            <span style="font-size: 11px; color: #a855f7; cursor: pointer;" onclick="goTo('home')">🏠 Home</span>
+        </div>
+
+        <div id="reels-container" style="display: flex; flex-direction: column; gap: 10px; max-height: 220px; overflow-y: auto;"></div>
+
+        <button class="btn-outline" onclick="goTo('home')" style="margin-top: 8px;">Back to Home</button>
+    </div>
+
+    <div id="screen-messages" class="container screen">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3c; padding-bottom: 6px; margin-bottom: 8px;">
+            <h3 style="margin: 0; font-size: 15px;">💬 Direct Messages</h3>
+            <span style="font-size: 11px; color: #a855f7; cursor: pointer;" onclick="goTo('home')">🏠 Home</span>
+        </div>
+
+        <div id="inbox-list" style="margin-bottom: 10px; max-height: 100px; overflow-y: auto;">
+            <div onclick="openChatWith('@priya_sharma')" style="background: #1a1a24; padding: 8px; border-radius: 6px; margin-bottom: 4px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
+                <div><strong>Priya Sharma</strong> <div style="color: #888; font-size: 9px;">@priya_sharma</div></div>
+                <span style="color: #a855f7;">Chat →</span>
+            </div>
+        </div>
+
+        <div id="active-chat-box" style="display: none; background: #15151c; border: 1px solid #2a2a3c; border-radius: 8px; padding: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3c; padding-bottom: 4px; margin-bottom: 6px;">
+                <strong id="chat-receiver-name" style="font-size: 12px; color: #a855f7;">Chat</strong>
+                <span style="font-size: 10px; cursor: pointer; color: #888;" onclick="closeChatWindow()">✕ Close</span>
+            </div>
+            <div id="chat-messages-container" style="height: 100px; overflow-y: auto; font-size: 11px; margin-bottom: 6px; display: flex; flex-direction: column; gap: 4px;"></div>
+            <div style="display: flex; gap: 4px;">
+                <input type="text" id="chat-input-text" placeholder="Type a message..." style="margin:0; font-size:11px; padding:4px;">
+                <button class="btn" style="width: auto; padding: 4px 8px; font-size: 11px;" onclick="sendDirectMessage()">Send</button>
+            </div>
+        </div>
+
+        <button class="btn-outline" onclick="goTo('home')" style="margin-top: 8px;">Back to Home</button>
+    </div>
+
+    <div id="screen-userprofile" class="container screen">
+        <h3 style="font-size: 16px; margin-bottom: 8px;">👤 My Profile</h3>
+        
+        <div style="text-align: center; margin-bottom: 10px; border-bottom: 1px solid #2a2a3c; padding-bottom: 10px;">
+            <div id="profile-avatar-box" style="width: 50px; height: 50px; border-radius: 50%; background: #a855f7; margin: 0 auto 6px auto; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px;">C</div>
+            <strong id="profile-display-name" style="font-size: 13px;">ConnectX Member</strong>
+            <p id="profile-display
