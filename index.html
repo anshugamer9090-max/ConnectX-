@@ -626,3 +626,200 @@
     <script src="app.js"></script>
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ConnectX - Master Social App</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="header">
+        <div>
+            <h1 style="margin: 0; font-size: 20px;">ConnectX</h1>
+            <p style="font-size: 11px; color: #888; margin: 2px 0 0 0;">Master Social Media Platform</p>
+        </div>
+        <span id="badge" style="background: #1f1f2e; color: #a855f7; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold;">Splash</span>
+    </div>
+
+    <div id="screen-splash" class="container screen active">
+        <h2>⚡ Splash Screen</h2>
+        <p style="font-size: 13px; color: #ccc;">Loading assets & checking auth...</p>
+        <button class="btn" onclick="goTo('welcome')">Proceed to App</button>
+    </div>
+
+    <div id="screen-welcome" class="container screen">
+        <h2>🚀 Welcome to ConnectX</h2>
+        <p style="font-size: 13px; color: #ccc;">Social + Video + Messaging + AI Discovery</p>
+        <button class="btn" onclick="goTo('login')">Login</button>
+        <button class="btn-outline" onclick="goTo('signup')">Create Account</button>
+    </div>
+
+    <div id="screen-login" class="container screen">
+        <h2>🔐 Login</h2>
+        <input type="email" placeholder="Email address">
+        <input type="password" placeholder="Password">
+        <button class="btn" onclick="goTo('home')">Login to App</button>
+        <p class="link" onclick="goTo('welcome')">Back</p>
+    </div>
+
+    <div id="screen-signup" class="container screen">
+        <h2>📝 Sign Up</h2>
+        <input type="email" placeholder="Email address">
+        <input type="password" placeholder="Password">
+        <button class="btn" onclick="goTo('profile')">Register</button>
+        <p class="link" onclick="goTo('welcome')">Back</p>
+    </div>
+
+    <div id="screen-profile" class="container screen">
+        <h2>👤 Profile Setup</h2>
+        <input type="text" id="setup-name" placeholder="Full Name">
+        <input type="text" id="setup-username" placeholder="Unique Username">
+        <textarea id="setup-bio" placeholder="Write your bio..." style="width:100%; padding:10px; margin:6px 0; background:#1a1a24; border:1px solid #2a2a3c; border-radius:8px; color:#fff; box-sizing:border-box; font-size:13px; resize:none; height:60px;"></textarea>
+        <button class="btn" onclick="saveInitialProfile()">Save & Continue</button>
+    </div>
+
+    <div id="screen-home" class="container screen">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3c; padding-bottom: 8px; margin-bottom: 12px;">
+            <h3 style="margin: 0; font-size: 15px;">🏠 ConnectX Feed</h3>
+            <span style="font-size: 12px; cursor: pointer; color: #a855f7;" onclick="goTo('messages')">💬 Messages</span>
+        </div>
+
+        <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 12px;">
+            <div style="text-align: center; font-size: 10px;">
+                <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #a855f7, #ec4899); display: flex; align-items: center; justify-content: center; font-weight: bold;">+</div>
+                Your Story
+            </div>
+        </div>
+
+        <div id="posts-container"></div>
+
+        <div style="display: flex; justify-content: space-around; margin-top: 15px; border-top: 1px solid #2a2a3c; padding-top: 10px; font-size: 11px; color: #888;">
+            <span style="color: #a855f7; font-weight: bold; cursor: pointer;">Home</span>
+            <span style="cursor: pointer;" onclick="goTo('explore')">Explore</span>
+            <span style="cursor: pointer;" onclick="goTo('create')">➕ Create</span>
+            <span style="cursor: pointer;" onclick="goTo('reels')">Reels</span>
+            <span style="cursor: pointer;" onclick="goTo('userprofile')">Profile</span>
+        </div>
+    </div>
+
+    <div id="screen-explore" class="container screen">
+        <h3 style="font-size: 16px;">🔍 Search & Explore</h3>
+        <input type="text" placeholder="Search users, hashtags...">
+        <div style="background: #1a1a24; padding: 10px; border-radius: 8px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <strong style="font-size: 12px;">Creator_Rahul</strong>
+                <div style="font-size: 10px; color: #888;">@rahul_dev</div>
+            </div>
+            <button class="btn" style="width: auto; padding: 4px 10px; font-size: 11px;" onclick="toggleFollowUser('Creator_Rahul')">Follow</button>
+        </div>
+        <button class="btn-outline" onclick="goTo('home')" style="margin-top: 15px;">Back to Home</button>
+    </div>
+
+    <div id="screen-create" class="container screen">
+        <h3 style="font-size: 16px;">➕ Create Post / Story</h3>
+        
+        <div id="media-preview-box" style="width: 100%; height: 90px; background: #1a1a24; border: 2px dashed #2a2a3c; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #888; font-size: 12px; margin-bottom: 8px; filter: none;">
+            Tap to upload photo/video
+        </div>
+
+        <label style="font-size: 11px; color: #a855f7;">Select Instagram Filter (15+):</label>
+        <select id="filter-select" onchange="applyFilterPreview()" style="width:100%; padding:6px; margin:4px 0 8px 0; background:#1a1a24; border:1px solid #2a2a3c; border-radius:6px; color:#fff; font-size:11px;">
+            <option value="none">Normal (Standard)</option>
+            <option value="clarendon">Clarendon (High Contrast)</option>
+            <option value="gingham">Gingham (Vintage Warm)</option>
+            <option value="moon">Moon (B&W Classic)</option>
+            <option value="lark">Lark (Bright & Fresh)</option>
+            <option value="reyes">Reyes (Dusty Retro)</option>
+            <option value="juno">Juno (Vibrant Pops)</option>
+            <option value="slumber">Slumber (Soft & Dreamy)</option>
+            <option value="crema">Crema (Creamy Glow)</option>
+            <option value="ludwig">Ludwig (Clean & Warm)</option>
+            <option value="aden">Aden (Pastel Peach)</option>
+            <option value="perpetua">Perpetua (Bright & Airy)</option>
+            <option value="amaro">Amaro (Soft Vintage)</option>
+            <option value="mayfair">Mayfair (Warm Vignette)</option>
+            <option value="rise">Rise (Golden Glow)</option>
+            <option value="hudson">Hudson (Cool Icy)</option>
+        </select>
+
+        <label style="font-size: 11px; color: #a855f7;">Add Background Music:</label>
+        <input type="text" id="music-search" placeholder="Search trending songs..." onkeyup="filterMusicList()" style="margin: 4px 0;">
+        <select id="music-select" style="width:100%; padding:6px; margin:4px 0 8px 0; background:#1a1a24; border:1px solid #2a2a3c; border-radius:6px; color:#fff; font-size:11px;">
+            <option value="">-- Choose a Song --</option>
+            <option value="Blinding Lights - The Weeknd">Blinding Lights - The Weeknd</option>
+            <option value="Shape of You - Ed Sheeran">Shape of You - Ed Sheeran</option>
+            <option value="Kesariya - Arijit Singh">Kesariya - Arijit Singh</option>
+            <option value="Raataan Lambiyan - Jubin Nautiyal">Raataan Lambiyan - Jubin Nautiyal</option>
+            <option value="STAY - Justin Bieber">STAY - Justin Bieber</option>
+            <option value="Levitating - Dua Lipa">Levitating - Dua Lipa</option>
+            <option value="Apna Bana Le - Arijit Singh">Apna Bana Le - Arijit Singh</option>
+            <option value="Night Changes - One Direction">Night Changes - One Direction</option>
+        </select>
+
+        <textarea id="post-caption-input" placeholder="Write a caption..." style="width:100%; padding:8px; margin:4px 0; background:#1a1a24; border:1px solid #2a2a3c; border-radius:8px; color:#fff; box-sizing:border-box; font-size:12px; resize:none; height:50px;"></textarea>
+        
+        <button class="btn" onclick="addNewPost()">Share Post</button>
+        <button class="btn-outline" onclick="goTo('home')">Cancel</button>
+    </div>
+
+    <div id="screen-reels" class="container screen">
+        <h3 style="font-size: 16px;">🎬 Reels Feed</h3>
+        <div style="width: 100%; height: 180px; background: #1a1a24; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #888; font-size: 12px; margin-bottom: 8px;">
+            [Vertical Video Player Shell]
+        </div>
+        <button class="btn" style="margin-bottom: 6px; font-size: 11px; padding: 6px;" onclick="toggleFollowUser('Reel_Creator')">Follow Reel Creator</button>
+        <button class="btn-outline" onclick="goTo('home')">Back to Home</button>
+    </div>
+
+    <div id="screen-messages" class="container screen">
+        <h3 style="font-size: 16px;">💬 Messages & Chat</h3>
+        <div style="background: #1a1a24; padding: 10px; border-radius: 8px; margin: 10px 0; font-size: 12px;">
+            <strong>@support_user</strong>: Welcome to ConnectX!
+        </div>
+        <button class="btn-outline" onclick="goTo('home')">Back to Home</button>
+    </div>
+
+    <div id="screen-userprofile" class="container screen">
+        <h3 style="font-size: 16px; margin-bottom: 8px;">👤 My Profile</h3>
+        
+        <div style="text-align: center; margin-bottom: 10px; border-bottom: 1px solid #2a2a3c; padding-bottom: 10px;">
+            <div id="profile-avatar-box" style="width: 50px; height: 50px; border-radius: 50%; background: #a855f7; margin: 0 auto 6px auto; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px;">C</div>
+            <strong id="profile-display-name" style="font-size: 13px;">ConnectX Member</strong>
+            <p id="profile-display-username" style="font-size: 11px; color: #888; margin: 2px 0;">@connectx_user</p>
+            <p id="profile-display-bio" style="font-size: 11px; color: #ccc; margin: 2px 0;">Welcome to my profile!</p>
+            
+            <div style="display: flex; justify-content: space-around; margin-top: 10px; background: #1a1a24; padding: 8px; border-radius: 8px; font-size: 11px;">
+                <div><strong id="count-posts">0</strong><br><span style="color:#888;">Posts</span></div>
+                <div style="cursor:pointer;" onclick="openFollowersList()"><strong id="count-followers">0</strong><br><span style="color:#888;">Followers</span></div>
+                <div style="cursor:pointer;" onclick="openFollowingList()"><strong id="count-following">0</strong><br><span style="color:#888;">Following</span></div>
+            </div>
+
+            <button class="btn-outline" style="margin-top: 8px; padding: 4px; font-size: 11px;" onclick="toggleEditProfileMode()">Edit Profile Details</button>
+        </div>
+
+        <div id="edit-profile-box" style="display: none; background: #1a1a24; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+            <input type="text" id="edit-name" placeholder="Change Name" style="margin-bottom: 6px;">
+            <input type="text" id="edit-username" placeholder="Change Username" style="margin-bottom: 6px;">
+            <input type="text" id="edit-avatar" placeholder="Image URL / Emoji for Avatar" style="margin-bottom: 6px;">
+            <textarea id="edit-bio" placeholder="Change bio..." style="width:100%; padding:6px; background:#111; border:1px solid #333; color:#fff; border-radius:6px; font-size:11px; height:40px; margin-bottom:6px;"></textarea>
+            <button class="btn" style="padding: 4px; font-size: 11px;" onclick="saveProfileChanges()">Update Profile</button>
+        </div>
+
+        <div id="connections-view-box" style="display: none; background: #1a1a24; padding: 8px; border-radius: 8px; margin-bottom: 10px; max-height: 100px; overflow-y: auto;">
+            <h5 id="connections-title" style="margin: 0 0 6px 0; font-size: 11px; color: #a855f7;">List</h5>
+            <div id="connections-list-content" style="font-size: 11px; color: #ccc;"></div>
+        </div>
+
+        <h4 style="font-size: 12px; color: #a855f7; margin-bottom: 6px;">My Posts Grid</h4>
+        <div id="profile-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; max-height: 120px; overflow-y: auto; margin-bottom: 10px;"></div>
+
+        <button class="btn-outline" onclick="goTo('welcome')">Logout</button>
+        <button class="btn-outline" onclick="goTo('home')" style="margin-top: 4px;">Back to Home</button>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
