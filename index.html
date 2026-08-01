@@ -1707,3 +1707,22 @@
     <script src="app.js"></script>
 </body>
 </html>
+<div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3c; padding-bottom: 8px; margin-bottom: 12px;">
+    <h3 style="margin: 0; font-size: 15px;">🏠 ConnectX Feed</h3>
+    <div>
+        <span style="font-size: 11px; cursor: pointer; color: #ec4899; margin-right: 6px;" onclick="openAiMatchScreen()">🤖 AI Match</span>
+        <span style="font-size: 11px; cursor: pointer; color: #38bdf8; margin-right: 6px;" onclick="goTo('notifications')">🔔 Notifs</span>
+        <span style="font-size: 11px; cursor: pointer; color: #a855f7;" onclick="goTo('messages')">💬 Messages</span>
+    </div>
+</div>
+<div id="screen-notifications" class="container screen">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3c; padding-bottom: 6px; margin-bottom: 10px;">
+        <h3 style="margin: 0; font-size: 15px; color: #38bdf8;">🔔 Activity Notifications</h3>
+        <span style="font-size: 11px; cursor: pointer; color: #a855f7;" onclick="goTo('home')">✕ Close</span>
+    </div>
+
+    <div id="notifications-list-container" style="max-height: 220px; overflow-y: auto; font-size: 11px; display: flex; flex-direction: column; gap: 6px;">
+        </div>
+
+    <button class="btn-outline" onclick="goTo('home')" style="margin-top: 15px;">Back to Home</button>
+</div>
