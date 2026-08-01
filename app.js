@@ -2269,3 +2269,514 @@ function renderProfileGrid() {
     });
 }
     
+// ConnectX Master Logic - AI Match & Real User System Added
+
+function goTo(screenName) {
+    const screens = document.querySelectorAll('.screen');
+    screens.forEach(s => s.classList.remove('active'));
+    
+    const targetScreen = document.getElementById('screen-' + screenName);
+    if (targetScreen) {
+        targetScreen.classList.add('active');
+    }
+    
+    const badge = document.getElementById('badge');
+    if (badge) {
+        badge.innerText = screenName.toUpperCase();
+    }
+
+    if (screenName === 'home') {
+        renderFeed();
+    } else if (screenName === 'userprofile') {
+        updateProfileUI();
+    } else if (screenName === 'reels') {
+        renderReelsFeed();
+    }
+}
+
+// User Profile Data (with Gender, Age, Location, Hobbies saved permanently)
+let userProfile = {
+    name: "ConnectX Member",
+    username: "@connectx_user",
+    gender: "Male", // "Male" or "Female"
+    age: 21,
+    location: "Delhi",
+    hobbies: "coding, music, gaming",
+    bio: "Welcome to my profile!",
+    avatar: "C"
+};
+
+let userStats = {
+    followersList: [],
+    followingList: []
+};
+
+// Real user database pool for AI matching (Only real human profiles, opposite gender filter applied)
+let realUsersDatabase = [
+    { name: "Priya Sharma", username: "@priya_sharma", gender: "Female", age: 20, location: "Delhi", hobbies: "music, reading, art", bio: "Art lover & coder" },
+    { name: "Aarav Gupta", username: "@aarav_g", gender: "Male", age: 22, location: "Mumbai", hobbies: "gaming, coding, cricket", bio: "Tech enthusiast" },
+    { name: "Sneha Patel", username: "@sneha_p", gender: "Female", age: 21, location: "Bangalore", hobbies: "dancing, coding, travel", bio: "Wanderlust" },
+    { name: "Rohan Verma", username: "@rohan_v", gender: "Male", age: 23, location: "Delhi", hobbies: "music, gym, photography", bio: "Fitness & Shutterbug" }
+];
+
+let posts = [];
+let chatConversations = {};
+let activeChatUser = null;
+let activePostIdForComments = null;
+let currentAiMatchedUser = null;
+
+// Profile Management Functions
+function saveInitialProfile() {
+    const name = document.getElementById('setup-name').value.trim();
+    const username = document.getElementById('setup-username').value.trim();
+    const gender = document.getElementById('setup-gender').value;
+    const age = parseInt(document.getElementById('setup-age').value) || 20;
+    const location = document.getElementById('setup-location').value.trim();
+    const hobbies = document.getElementById('setup-hobbies').value.trim();
+    const bio = document.getElementById('setup-bio').value.trim();
+
+    if(name) userProfile.name = name;
+    if(username) userProfile.username = username.startsWith('@') ? username : '@' + username;
+    userProfile.gender = gender;
+    userProfile.age = age;
+    if(location) userProfile.location = location;
+    if(hobbies) userProfile.hobbies = hobbies;
+    if(bio) userProfile.bio = bio;
+    userProfile.avatar = userProfile.name.charAt(0).toUpperCase();
+
+    goTo('home');
+}
+
+function toggleEditProfileMode() {
+    const box = document.getElementById('edit-profile-box');
+    if(box.style.display === 'none' || box.style.display === '') {
+        box.style.display = 'block';
+        document.getElementById('edit-name').value = userProfile.name;
+        document.getElementById('edit-username').value = userProfile.username;
+        document.getElementById('edit-gender').value = userProfile.gender;
+        document.getElementById('edit-age').value = userProfile.age;
+        document.getElementById('edit-location').value = userProfile.location;
+        document.getElementById('edit-hobbies').value = userProfile.hobbies;
+        document.getElementById('edit-bio').value = userProfile.bio;
+    } else {
+        box.style.display = 'none';
+    }
+}
+
+function saveProfileChanges() {
+    const name = document.getElementById('edit-name').value.trim();
+    const username = document.getElementById('edit-username').value.trim();
+    const gender = document.getElementById('edit-gender').value;
+    const age = parseInt(document.getElementById('edit-age').value) || userProfile.age;
+    const location = document.getElementById('edit-location').value.trim();
+    const hobbies = document.getElementById('edit-hobbies').value.trim();
+    const bio = document.getElementById('edit-bio').value.trim();
+
+    if(name) userProfile.name = name;
+    if(username) userProfile.username = username.startsWith('@') ? username : '@' + username;
+    userProfile.gender = gender;
+    userProfile.age = age;
+    if(location) userProfile.location = location;
+    if(hobbies) userProfile.hobbies = hobbies;
+    if(bio) userProfile.bio = bio;
+    userProfile.avatar = userProfile.name.charAt(0).toUpperCase();
+
+    document.getElementById('edit-profile-box').style.display = 'none';
+    updateProfileUI();
+}
+
+function updateProfileUI() {
+    document.getElementById('profile-display-name').innerText = userProfile.name;
+    document.getElementById('profile-display-username').innerText = userProfile.username;
+    document.getElementById('profile-display-details').innerText = `${userProfile.gender} | ${userProfile.age} yrs | ${userProfile.location}`;
+    document.getElementById('profile-display-bio').innerText = userProfile.bio;
+    document.getElementById('profile-avatar-box').innerText = userProfile.avatar;
+
+    const myPostsCount = posts.filter(p => p.isMyPost).length;
+    document.getElementById('count-posts').innerText = myPostsCount;
+    document.getElementById('count-followers').innerText = userStats.followersList.length;
+    document.getElementById('count-following').innerText = userStats.followingList.length;
+
+    renderProfileGrid();
+}
+
+// AI Match Screen Handler (Checks if data exists once, otherwise prompts user only once)
+function openAiMatchScreen() {
+    goTo('aimatch');
+    const promptBox = document.getElementById('ai-match-setup-prompt');
+    const resultsBox = document.getElementById('ai-match-results-box');
+    const card = document.getElementById('ai-matched-profile-card');
+
+    card.style.display = 'none';
+
+    // Check if required matching data is missing or incomplete
+    if (!userProfile.age || !userProfile.location || !userProfile.hobbies) {
+        promptBox.style.display = 'block';
+        resultsBox.style.display = 'none';
+        document.getElementById('ai-req-age').value = userProfile.age || '';
+        document.getElementById('ai-req-location').value = userProfile.location || '';
+        document.getElementById('ai-req-hobbies').value = userProfile.hobbies || '';
+    } else {
+        promptBox.style.display = 'none';
+        resultsBox.style.display = 'block';
+    }
+}
+
+function saveAiPreferences() {
+    const age = parseInt(document.getElementById('ai-req-age').value);
+    const location = document.getElementById('ai-req-location').value.trim();
+    const hobbies = document.getElementById('ai-req-hobbies').value.trim();
+
+    if(!age || !location || !hobbies) {
+        alert("Please fill all preference fields!");
+        return;
+    }
+
+    userProfile.age = age;
+    userProfile.location = location;
+    userProfile.hobbies = hobbies;
+
+    alert("Preferences saved successfully! You won't be asked again.");
+    openAiMatchScreen();
+}
+
+// AI Matching Algorithm (Strict Rules: Opposite Gender + Real Person Only + Age/Location/Hobbies match)
+function runAiMatching() {
+    const targetGenderToMatch = userProfile.gender === 'Male' ? 'Female' : 'Male';
+
+    // Filter real users based on opposite gender constraint
+    const eligiblePool = realUsersDatabase.filter(u => u.gender === targetGenderToMatch);
+
+    if (eligiblePool.length === 0) {
+        alert("No suitable real matches found right now!");
+        return;
+    }
+
+    // Pick best match using AI score logic (matching location/hobbies/age closeness)
+    let bestMatch = eligiblePool[0];
+    let maxScore = -1;
+
+    eligiblePool.forEach(u => {
+        let score = 0;
+        if (u.location.toLowerCase() === userProfile.location.toLowerCase()) score += 5;
+        if (Math.abs(u.age - userProfile.age) <= 3) score += 3;
+        
+        // Hobbies matching check
+        const userHobbiesArr = userProfile.hobbies.toLowerCase().split(',').map(h => h.trim());
+        const targetHobbiesArr = u.hobbies.toLowerCase().split(',').map(h => h.trim());
+        const commonHobbies = userHobbiesArr.filter(h => targetHobbiesArr.includes(h));
+        score += commonHobbies.length * 2;
+
+        if (score > maxScore) {
+            maxScore = score;
+            bestMatch = u;
+        }
+    });
+
+    currentAiMatchedUser = bestMatch;
+
+    // Display Matched Card with Age visible during match view as requested
+    const card = document.getElementById('ai-matched-profile-card');
+    card.style.display = 'block';
+
+    document.getElementById('matched-avatar').innerText = bestMatch.name.charAt(0);
+    document.getElementById('matched-name').innerText = bestMatch.name;
+    document.getElementById('matched-username').innerText = bestMatch.username;
+    document.getElementById('matched-meta').innerText = `Age: ${bestMatch.age} yrs | Location: ${bestMatch.location} (${bestMatch.gender})`;
+    document.getElementById('matched-hobbies').innerText = `Hobbies: ${bestMatch.hobbies}`;
+}
+
+function followMatchedUser() {
+    if(!currentAiMatchedUser) return;
+    toggleFollowUser(currentAiMatchedUser.username);
+}
+
+function chatWithMatchedUser() {
+    if(!currentAiMatchedUser) return;
+    openChatWith(currentAiMatchedUser.username);
+}
+
+// Follow / Unfollow System
+function toggleFollowUser(targetUserHandle) {
+    const handle = targetUserHandle.startsWith('@') ? targetUserHandle : '@' + targetUserHandle.toLowerCase().replace(/\s+/g, '_');
+    const index = userStats.followingList.indexOf(handle);
+
+    if (index > -1) {
+        userStats.followingList.splice(index, 1);
+        alert("Unfollowed " + handle);
+    } else {
+        userStats.followingList.push(handle);
+        userStats.followersList.push("@fan_" + Math.floor(Math.random() * 1000));
+        alert("Successfully followed " + handle);
+    }
+    updateProfileUI();
+}
+
+function openFollowersList() {
+    const box = document.getElementById('connections-view-box');
+    const title = document.getElementById('connections-title');
+    const content = document.getElementById('connections-list-content');
+    
+    title.innerText = "Followers (" + userStats.followersList.length + ")";
+    box.style.display = 'block';
+    content.innerHTML = '';
+
+    if(userStats.followersList.length === 0) {
+        content.innerHTML = "No followers yet.";
+        return;
+    }
+
+    userStats.followersList.forEach((follower, idx) => {
+        content.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span>${follower}</span>
+            <button onclick="removeFollower(${idx})" style="background:#e11d48; color:#fff; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;">Remove</button>
+        </div>`;
+    });
+}
+
+function openFollowingList() {
+    const box = document.getElementById('connections-view-box');
+    const title = document.getElementById('connections-title');
+    const content = document.getElementById('connections-list-content');
+    
+    title.innerText = "Following (" + userStats.followingList.length + ")";
+    box.style.display = 'block';
+    content.innerHTML = '';
+
+    if(userStats.followingList.length === 0) {
+        content.innerHTML = "Not following anyone.";
+        return;
+    }
+
+    userStats.followingList.forEach((following, idx) => {
+        content.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span>${following}</span>
+            <button onclick="unfollowUser(${idx})" style="background:#e11d48; color:#fff; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;">Unfollow</button>
+        </div>`;
+    });
+}
+
+function removeFollower(index) {
+    userStats.followersList.splice(index, 1);
+    openFollowersList();
+    updateProfileUI();
+}
+
+function unfollowUser(index) {
+    userStats.followingList.splice(index, 1);
+    openFollowingList();
+    updateProfileUI();
+}
+
+// Direct Messaging Chat Functions
+function openChatWith(userHandle) {
+    activeChatUser = userHandle;
+    goTo('messages');
+    
+    const chatBox = document.getElementById('active-chat-box');
+    const receiverTitle = document.getElementById('chat-receiver-name');
+    
+    chatBox.style.display = 'block';
+    receiverTitle.innerText = "Chat with " + userHandle;
+
+    renderChatMessages();
+}
+
+function closeChatWindow() {
+    activeChatUser = null;
+    document.getElementById('active-chat-box').style.display = 'none';
+}
+
+function renderChatMessages() {
+    const container = document.getElementById('chat-messages-container');
+    if (!container || !activeChatUser) return;
+
+    container.innerHTML = '';
+    if (!chatConversations[activeChatUser]) {
+        chatConversations[activeChatUser] = [];
+    }
+
+    const messages = chatConversations[activeChatUser];
+    if (messages.length === 0) {
+        container.innerHTML = '<div style="color: #888; text-align: center;">No messages yet. Say hello!</div>';
+        return;
+    }
+
+    messages.forEach(msg => {
+        const isMe = msg.sender === userProfile.username;
+        const alignStyle = isMe ? "text-align: right; background: #252533; color: #fff;" : "text-align: left; background: #1a1a24; color: #a855f7;";
+        
+        container.innerHTML += `
+            <div style="padding: 6px 8px; border-radius: 6px; font-size: 11px; ${alignStyle}">
+                <div style="font-size: 8px; color: #888; margin-bottom: 2px;">${msg.sender}</div>
+                <span>${msg.text}</span>
+            </div>
+        `;
+    });
+    container.scrollTop = container.scrollHeight;
+}
+
+function sendDirectMessage() {
+    const input = document.getElementById('chat-input-text');
+    const text = input ? input.value.trim() : '';
+
+    if (text === "" || !activeChatUser) return;
+
+    if (!chatConversations[activeChatUser]) {
+        chatConversations[activeChatUser] = [];
+    }
+
+    chatConversations[activeChatUser].push({
+        sender: userProfile.username,
+        text: text
+    });
+
+    input.value = "";
+    renderChatMessages();
+}
+
+// Comments Feature Logic
+function openComments(postId) {
+    activePostIdForComments = postId;
+    goTo('comments');
+    renderCommentsList();
+}
+
+function renderCommentsList() {
+    const container = document.getElementById('comments-list-box');
+    if (!container) return;
+
+    const post = posts.find(p => p.id === activePostIdForComments);
+    if (!post) return;
+
+    container.innerHTML = '';
+
+    if (!post.comments || post.comments.length === 0) {
+        container.innerHTML = '<p style="color: #888; text-align: center;">No comments yet. Be the first!</p>';
+        return;
+    }
+
+    post.comments.forEach(c => {
+        container.innerHTML += `
+            <div style="background: #1a1a24; padding: 6px 8px; border-radius: 6px; margin-bottom: 6px; border: 1px solid #2a2a3c;">
+                <strong style="color: #a855f7;">${c.user}</strong>: <span>${c.text}</span>
+            </div>
+        `;
+    });
+}
+
+function postComment() {
+    const input = document.getElementById('comment-input');
+    const text = input ? input.value.trim() : '';
+
+    if (text === "") {
+        alert("Please write a comment!");
+        return;
+    }
+
+    const post = posts.find(p => p.id === activePostIdForComments);
+    if (post) {
+        if (!post.comments) post.comments = [];
+        post.comments.push({
+            user: userProfile.username,
+            text: text
+        });
+        input.value = "";
+        renderCommentsList();
+        renderFeed();
+    }
+}
+
+// Create Post / Reel Logic
+function addNewPost() {
+    const captionInput = document.getElementById('post-caption-input');
+    const captionText = captionInput ? captionInput.value.trim() : '';
+    const selectedFilter = document.getElementById('filter-select').value;
+    const selectedMusic = document.getElementById('music-select').value;
+
+    if (captionText === "") {
+        alert("Please write something for your post!");
+        return;
+    }
+
+    const isReelPost = selectedMusic !== "";
+
+    const newPost = {
+        id: posts.length + 1,
+        user: userProfile.name,
+        username: userProfile.username,
+        caption: captionText,
+        likes: 0,
+        liked: false,
+        isMyPost: true,
+        filter: selectedFilter,
+        music: selectedMusic,
+        isReel: isReelPost,
+        comments: []
+    };
+
+    posts.unshift(newPost);
+    captionInput.value = "";
+    goTo('home');
+}
+
+// Render Reels Feed
+function renderReelsFeed() {
+    const container = document.getElementById('reels-container');
+    if (!container) return;
+
+    container.innerHTML = '';
+    const reelsList = posts.filter(p => p.isReel);
+
+    if (reelsList.length === 0) {
+        container.innerHTML = '<p style="color: #888; text-align: center; font-size: 11px;">No reels available. Create a post with background music to add a reel!</p>';
+        return;
+    }
+
+    reelsList.forEach(reel => {
+        const reelDiv = document.createElement('div');
+        reelDiv.style.cssText = "background: #1a1a24; border-radius: 8px; padding: 10px; border: 1px solid #2a2a3c; margin-bottom: 8px; text-align: center;";
+        
+        reelDiv.innerHTML = `
+            <div style="height: 100px; background: #252533; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #aaa; font-size: 11px; margin-bottom: 6px;">
+                <span>▶️ [Vertical Reel Player]</span>
+                <span style="font-size: 9px; color: #a855f7; margin-top: 2px;">🎵 ${reel.music || 'Original Audio'}</span>
+            </div>
+            <strong style="font-size: 11px; display: block; text-align: left;">${reel.user}</strong>
+            <p style="font-size: 11px; margin: 2px 0; text-align: left; color: #ccc;">${reel.caption}</p>
+            <div style="display: flex; gap: 12px; font-size: 11px; margin-top: 6px;">
+                <span onclick="toggleLike(${reel.id})" style="cursor: pointer; color: ${reel.liked ? '#ec4899' : '#fff'};">
+                    ${reel.liked ? '❤️' : '🤍'} ${reel.likes}
+                </span>
+                <span onclick="openComments(${reel.id})" style="cursor: pointer; color: #aaa;">💬 Comments</span>
+            </div>
+        `;
+        container.appendChild(reelDiv);
+    });
+}
+
+// Render Home Feed Posts
+function renderFeed() {
+    const container = document.getElementById('posts-container');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    if (posts.length === 0) {
+        container.innerHTML = '<p style="color: #888; text-align: center; font-size: 12px; margin-top: 20px;">No posts in feed yet. Tap ➕ Create to publish your first post!</p>';
+        return;
+    }
+
+    posts.forEach(post => {
+        const postDiv = document.createElement('div');
+        postDiv.style.cssText = "background: #1a1a24; border-radius: 10px; padding: 10px; border: 1px solid #2a2a3c; margin-bottom: 12px;";
+        
+        let musicTag = post.music ? `<div style="font-size: 10px; color: #a855f7; margin-bottom: 4px;">🎵 Playing: ${post.music}</div>` : '';
+        let commentCount = post.comments ? post.comments.length : 0;
+        let reelBadge = post.isReel ? `<span style="background: #a855f7; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 9px; float: right;">Reel</span>` : '';
+
+        postDiv.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                <div style="display: flex; align-items: center;">
+                    <div style="width: 28px; height: 28px; border-radius: 50%; background: #a855f7; margin-right: 8px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;">${post.user.charAt(0)}</div>
+                
