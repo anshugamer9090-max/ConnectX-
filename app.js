@@ -4365,3 +4365,29 @@ function renderChatMessages() {
     messages.forEach(msg => {
         const isMe = msg.sender === userProfile.username;
         const alignStyle = isMe ? "text-align: right; background: #25
+// ConnectX Theme Toggle Logic
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const btn = document.getElementById('theme-toggle-btn');
+
+    if (currentTheme === 'light') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        if (btn) btn.innerText = "☀️ Light";
+        localStorage.setItem('connectx_theme', 'dark');
+    } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+        if (btn) btn.innerText = "🌙 Dark";
+        localStorage.setItem('connectx_theme', 'light');
+    }
+}
+
+// App load par saved theme check karein
+window.addEventListener('DOMContentLoaded', () => {
+    const savedTheme = localStorage.getItem('connectx_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    const btn = document.getElementById('theme-toggle-btn');
+    if (btn) {
+        btn.innerText = savedTheme === 'light' ? "🌙 Dark" : "☀️ Light";
+    }
+});
+        
